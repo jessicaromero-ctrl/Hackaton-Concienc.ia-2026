@@ -1,0 +1,339 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { TrendingUp, TrendingDown, AlertCircle, Activity, ExternalLink, BarChart2 } from "lucide-react";
+import { useState } from "react";
+
+export const Route = createFileRoute("/dashboard")({
+  head: () => ({ meta: [{ title: "Dashboard Municipal · MexNLP-911" }] }),
+  component: DashboardPage,
+});
+
+const KPIS = [
+  { label: "Llamadas hoy", value: "847", delta: "+12% vs ayer", deltaColor: "#1AAA55", icon: TrendingUp },
+  { label: "Clasificadas por IA", value: "831", delta: "98.1% precisión", deltaColor: "#3B82B5", icon: Activity },
+  { label: "Tiempo promedio de respuesta", value: "38s", delta: "-41% vs sistema anterior", deltaColor: "#1AAA55", icon: TrendingDown },
+  { label: "Nivel 4 atendidos", value: "12", delta: "Alta prioridad", deltaColor: "#D7263D", icon: AlertCircle },
+];
+
+const HOURS = Array.from({ length: 24 }, (_, h) => {
+  const peak = (c: number) => {
+    const d = (h - c + 24) % 24 > 12 ? 24 - ((h - c + 24) % 24) : (h - c + 24) % 24;
+    return Math.exp(-Math.pow(d, 2) / 8);
+  };
+  const base = 4;
+  const salud = Math.round(base + 22 * (peak(2) + peak(8) + peak(14) * 0.7 + peak(21) * 0.9));
+  const seguridad = Math.round(base + 18 * (peak(2) * 1.2 + peak(21) + peak(14) * 0.5));
+  const bomberos = Math.round(base + 12 * (peak(8) * 0.6 + peak(14) + peak(21) * 0.7));
+  return { h, salud, seguridad, bomberos };
+});
+const MAX_BAR = Math.max(...HOURS.map((d) => d.salud + d.seguridad + d.bomberos));
+
+const ALCALDIAS: { name: string; incidents: number }[] = [
+  { name: "Iztapalapa", incidents: 142 },
+  { name: "Gustavo A. Madero", incidents: 118 },
+  { name: "Álvaro Obregón", incidents: 96 },
+  { name: "Tlalpan", incidents: 87 },
+  { name: "Cuauhtémoc", incidents: 81 },
+  { name: "Coyoacán", incidents: 54 },
+  { name: "Venustiano Carranza", incidents: 49 },
+  { name: "Iztacalco", incidents: 44 },
+  { name: "Xochimilco", incidents: 41 },
+  { name: "Azcapotzalco", incidents: 37 },
+  { name: "Benito Juárez", incidents: 32 },
+  { name: "Miguel Hidalgo", incidents: 30 },
+  { name: "La Magdalena Contreras", incidents: 21 },
+  { name: "Tláhuac", incidents: 19 },
+  { name: "Cuajimalpa", incidents: 14 },
+  { name: "Milpa Alta", incidents: 9 },
+];
+const MAX_ALC = ALCALDIAS[0].incidents;
+
+const RESPONSE_TREND = [180, 152, 128, 110, 92, 74, 55, 38];
+
+const INCIDENTES = [
+  { t: "14:12", desc: "Posible IAM, dolor torácico", lvl: 3, inst: "Salud", rsp: "42s", est: "atendido" },
+  { t: "14:10", desc: "Asalto a transeúnte, M. Taxqueña", lvl: 3, inst: "Seguridad", rsp: "31s", est: "en curso" },
+  { t: "14:07", desc: "Bebé deshidratado + fiebre", lvl: 2, inst: "Salud", rsp: "55s", est: "atendido" },
+  { t: "14:05", desc: "Sospecha ictus adulto mayor", lvl: 3, inst: "Salud", rsp: "29s", est: "en curso" },
+  { t: "14:02", desc: "Paro cardiorrespiratorio", lvl: 4, inst: "Salud", rsp: "18s", est: "atendido" },
+  { t: "13:58", desc: "Fuga de gas vecindad", lvl: 3, inst: "Bomberos", rsp: "47s", est: "atendido" },
+  { t: "13:55", desc: "Riña en vía pública", lvl: 2, inst: "Seguridad", rsp: "62s", est: "atendido" },
+  { t: "13:48", desc: "Incendio cuarto piso", lvl: 4, inst: "Bomberos", rsp: "22s", est: "en curso" },
+  { t: "13:41", desc: "Consulta no urgente", lvl: 0, inst: "Salud", rsp: "—", est: "atendido" },
+  { t: "13:36", desc: "Accidente vehicular leve", lvl: 2, inst: "Salud", rsp: "58s", est: "atendido" },
+];
+
+const LVL_COLOR: Record<number, string> = {
+  4: "#D7263D", 3: "#E07800", 2: "#E0C800", 1: "#1AAA55", 0: "#6B7079",
+};
+
+const STREAMLIT_URL = "https://datamexnlp.streamlit.app/?embed=true";
+
+function DashboardPage() {
+  const [tab, setTab] = useState<"resumen" | "analitico">("resumen");
+
+  return (
+    <div className="p-4 md:p-6 space-y-6">
+      <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-[#F5F5F7]">Dashboard Municipal</h1>
+          <p className="text-sm text-[#A0A4AB]">Inteligencia operativa · CDMX · hoy</p>
+        </div>
+        <div className="flex gap-1 p-1 rounded-lg" style={{ background: "#15171A", border: "1px solid #2A2D33" }}>
+          {[
+            { id: "resumen", label: "Resumen ejecutivo", icon: Activity },
+            { id: "analitico", label: "Dashboard analítico (live)", icon: BarChart2 },
+          ].map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id as typeof tab)}
+              className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium transition-all"
+              style={{
+                background: tab === id ? "#D7263D" : "transparent",
+                color: tab === id ? "#fff" : "#A0A4AB",
+              }}
+            >
+              <Icon size={14} /> {label}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {tab === "analitico" ? (
+        <AnalyticEmbed />
+      ) : (
+        <ExecutiveSummary />
+      )}
+    </div>
+  );
+}
+
+function AnalyticEmbed() {
+  return (
+    <div className="card-surface p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h2 className="font-display text-lg font-semibold text-[#F5F5F7]">Dashboard analítico en vivo</h2>
+          <p className="text-xs text-[#A0A4AB]">
+            Análisis dinámico del corpus de llamadas 911 · datamexnlp.streamlit.app
+          </p>
+        </div>
+        <a
+          href="https://datamexnlp.streamlit.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md font-medium"
+          style={{ background: "#D7263D", color: "#fff" }}
+        >
+          Abrir en pestaña <ExternalLink size={12} />
+        </a>
+      </div>
+      <div
+        className="rounded-md overflow-hidden"
+        style={{ border: "1px solid #2A2D33", background: "#fff" }}
+      >
+        <iframe
+          src={STREAMLIT_URL}
+          title="MexNLP-911 Analytic Dashboard"
+          className="w-full"
+          style={{ height: "calc(100vh - 220px)", minHeight: 720, border: 0 }}
+          loading="lazy"
+          allow="fullscreen"
+        />
+      </div>
+      <p className="text-[10px] text-[#6B7079] mt-2">
+        Si el dashboard no carga inmediatamente, Streamlit Cloud puede tardar unos
+        segundos en iniciar el contenedor (cold start).
+      </p>
+    </div>
+  );
+}
+
+function ExecutiveSummary() {
+  return (
+    <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {KPIS.map(({ label, value, delta, deltaColor, icon: Icon }) => (
+          <div key={label} className="card-surface p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs uppercase tracking-wider text-[#A0A4AB]">{label}</span>
+              <Icon size={16} style={{ color: deltaColor }} />
+            </div>
+            <div className="font-display text-3xl font-bold text-[#F5F5F7]">{value}</div>
+            <div className="text-xs mt-1" style={{ color: deltaColor }}>{delta}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-6 mt-6">
+        <div className="space-y-6">
+          {/* Bars */}
+          <div className="card-surface p-4">
+            <h2 className="font-display text-lg font-semibold mb-1">Incidentes por tipo de emergencia</h2>
+            <p className="text-xs text-[#A0A4AB] mb-4">Distribución por hora del día</p>
+            <div className="flex gap-3 mb-3 text-xs">
+              <Legend color="#1AAA55" label="Salud" />
+              <Legend color="#3B82B5" label="Seguridad" />
+              <Legend color="#E07800" label="Bomberos" />
+            </div>
+            <div className="flex items-end gap-[3px] h-44">
+              {HOURS.map((d) => {
+                const total = d.salud + d.seguridad + d.bomberos;
+                const h = (total / MAX_BAR) * 100;
+                return (
+                  <div key={d.h} className="flex-1 flex flex-col justify-end group">
+                    <div className="flex flex-col" style={{ height: `${h}%` }}>
+                      <div style={{ flex: d.bomberos, background: "#E07800" }} />
+                      <div style={{ flex: d.seguridad, background: "#3B82B5" }} />
+                      <div style={{ flex: d.salud, background: "#1AAA55" }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex justify-between text-[10px] text-[#A0A4AB] mt-2 px-1">
+              {[0, 4, 8, 12, 16, 20, 23].map((h) => <span key={h}>{String(h).padStart(2, "0")}h</span>)}
+            </div>
+          </div>
+
+          {/* Line */}
+          <div className="card-surface p-4">
+            <h2 className="font-display text-lg font-semibold mb-1">Tiempo de respuesta</h2>
+            <p className="text-xs text-[#A0A4AB] mb-4">Últimas 8 horas (segundos)</p>
+            <svg viewBox="0 0 320 120" className="w-full h-40">
+              <defs>
+                <linearGradient id="lg" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#D7263D" stopOpacity="0.55" />
+                  <stop offset="100%" stopColor="#D7263D" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              {(() => {
+                const max = Math.max(...RESPONSE_TREND);
+                const pts = RESPONSE_TREND.map((v, i) => {
+                  const x = (i / (RESPONSE_TREND.length - 1)) * 300 + 10;
+                  const y = 110 - (v / max) * 95;
+                  return [x, y] as const;
+                });
+                const path = pts.map((p, i) => (i ? `L${p[0]},${p[1]}` : `M${p[0]},${p[1]}`)).join(" ");
+                const area = path + ` L310,110 L10,110 Z`;
+                return (
+                  <>
+                    <path d={area} fill="url(#lg)" />
+                    <path d={path} fill="none" stroke="#FF4D5E" strokeWidth={2} />
+                    {pts.map(([x, y], i) => (
+                      <g key={i}>
+                        <circle cx={x} cy={y} r={3} fill="#FF4D5E" />
+                        <text x={x} y={y - 8} fontSize="9" fill="#A0A4AB" textAnchor="middle">
+                          {RESPONSE_TREND[i]}s
+                        </text>
+                      </g>
+                    ))}
+                  </>
+                );
+              })()}
+            </svg>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {/* Heatmap */}
+          <div className="card-surface p-4">
+            <h2 className="font-display text-lg font-semibold mb-1">Mapa de calor · alcaldías CDMX</h2>
+            <p className="text-xs text-[#A0A4AB] mb-4">Intensidad por volumen de incidentes</p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {ALCALDIAS.map((a) => {
+                const intensity = a.incidents / MAX_ALC;
+                return (
+                  <div
+                    key={a.name}
+                    className="aspect-square rounded-md p-2 flex flex-col justify-between border"
+                    style={{
+                      background: `rgba(215, 38, 61, ${0.10 + intensity * 0.65})`,
+                      borderColor: `rgba(255, 77, 94, ${0.20 + intensity * 0.45})`,
+                    }}
+                    title={`${a.name}: ${a.incidents}`}
+                  >
+                    <span className="text-[9px] leading-tight text-[#F5F5F7]">{a.name}</span>
+                    <span className="font-display text-lg font-bold text-[#F5F5F7] self-end">{a.incidents}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Top 5 */}
+          <div className="card-surface p-4">
+            <h2 className="font-display text-lg font-semibold mb-3">Top 5 zonas de riesgo activo</h2>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-wider text-[#A0A4AB] border-b" style={{ borderColor: "#2A2D33" }}>
+                  <th className="text-left py-2">Alcaldía</th>
+                  <th className="text-left">Tipo</th>
+                  <th className="text-right">Inc.</th>
+                  <th className="text-right">Tend.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { n: "Iztapalapa", t: "Seguridad", i: 142, tr: "↑" },
+                  { n: "Gustavo A. Madero", t: "Salud", i: 118, tr: "↑" },
+                  { n: "Álvaro Obregón", t: "Salud", i: 96, tr: "→" },
+                  { n: "Tlalpan", t: "Bomberos", i: 87, tr: "↑" },
+                  { n: "Cuauhtémoc", t: "Seguridad", i: 81, tr: "↓" },
+                ].map((r) => (
+                  <tr key={r.n} className="border-b" style={{ borderColor: "#1F2126" }}>
+                    <td className="py-2 text-[#F5F5F7]">{r.n}</td>
+                    <td className="text-[#A0A4AB]">{r.t}</td>
+                    <td className="text-right text-[#F5F5F7]">{r.i}</td>
+                    <td className="text-right font-bold" style={{ color: r.tr === "↑" ? "#D7263D" : r.tr === "↓" ? "#1AAA55" : "#A0A4AB" }}>{r.tr}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Incidents table */}
+      <div className="card-surface p-4 mt-6">
+        <h2 className="font-display text-lg font-semibold mb-3">Últimos 10 incidentes procesados</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[10px] uppercase tracking-wider text-[#A0A4AB] border-b" style={{ borderColor: "#2A2D33" }}>
+                <th className="text-left py-2 px-2">Hora</th>
+                <th className="text-left px-2">Descripción</th>
+                <th className="text-center px-2">Nivel</th>
+                <th className="text-left px-2">Institución</th>
+                <th className="text-right px-2">Resp.</th>
+                <th className="text-right px-2">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {INCIDENTES.map((r, i) => (
+                <tr key={i} className="border-b hover:bg-[rgba(215,38,61,0.06)]" style={{ borderColor: "#1F2126" }}>
+                  <td className="py-2 px-2 font-mono text-[#A0A4AB]">{r.t}</td>
+                  <td className="px-2 text-[#F5F5F7]">{r.desc}</td>
+                  <td className="px-2 text-center">
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold" style={{ background: LVL_COLOR[r.lvl], color: "#0B0B0D" }}>N{r.lvl}</span>
+                  </td>
+                  <td className="px-2 text-[#A0A4AB]">{r.inst}</td>
+                  <td className="px-2 text-right font-mono text-[#F5F5F7]">{r.rsp}</td>
+                  <td className="px-2 text-right text-xs uppercase" style={{ color: r.est === "atendido" ? "#1AAA55" : "#E0C800" }}>● {r.est}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Legend({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="w-3 h-3 rounded-sm" style={{ background: color }} />
+      <span className="text-[#A0A4AB]">{label}</span>
+    </div>
+  );
+}

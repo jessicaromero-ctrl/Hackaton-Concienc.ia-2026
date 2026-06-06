@@ -1,0 +1,136 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-display: "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
+}
+
+/*
+ * Executive Emergency palette
+ *  - bg            #0B0B0D  near-black canvas
+ *  - surface       #15171A  card
+ *  - surface-alt   #1C1F24  raised
+ *  - border        #2A2D33  hairline
+ *  - emergency red #D7263D  primary accent (urgency)
+ *  - red light     #FF4D5E  highlight / hover
+ *  - text          #F5F5F7  primary
+ *  - text-2        #A0A4AB  secondary
+ *  - text-3        #6B7079  tertiary
+ *  - health green  #1AAA55
+ *  - fire amber    #E07800
+ *  - security navy #3B82B5  (replaces former purple, differentiates from urgent red)
+ */
+:root {
+  --radius: 0.5rem;
+
+  --background: oklch(0.13 0.005 270);
+  --foreground: oklch(0.96 0.002 270);
+  --card: oklch(0.18 0.005 270);
+  --card-foreground: oklch(0.96 0.002 270);
+  --popover: oklch(0.18 0.005 270);
+  --popover-foreground: oklch(0.96 0.002 270);
+  --primary: oklch(0.58 0.22 25);
+  --primary-foreground: oklch(0.99 0.002 270);
+  --secondary: oklch(0.22 0.005 270);
+  --secondary-foreground: oklch(0.96 0.002 270);
+  --muted: oklch(0.22 0.005 270);
+  --muted-foreground: oklch(0.70 0.01 270);
+  --accent: oklch(0.65 0.20 25);
+  --accent-foreground: oklch(0.99 0.002 270);
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.99 0.002 270);
+  --border: oklch(0.30 0.008 270);
+  --input: oklch(0.22 0.005 270);
+  --ring: oklch(0.58 0.22 25);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html, body {
+    background-color: #0B0B0D;
+    color: #F5F5F7;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
+    letter-spacing: 0.01em;
+  }
+}
+
+@utility card-surface {
+  background-color: #15171A;
+  border: 1px solid #2A2D33;
+  border-radius: 8px;
+}
+
+@utility card-raised {
+  background-color: #1C1F24;
+  border: 1px solid #2A2D33;
+  border-radius: 8px;
+}
+
+@utility glow-emergency {
+  box-shadow: 0 0 24px -4px rgba(215, 38, 61, 0.55);
+}
+@utility glow-health {
+  box-shadow: 0 0 24px -4px rgba(26, 170, 85, 0.55);
+}
+@utility glow-fire {
+  box-shadow: 0 0 24px -4px rgba(224, 120, 0, 0.55);
+}
+@utility glow-security {
+  box-shadow: 0 0 24px -4px rgba(59, 130, 181, 0.55);
+}
+
+@keyframes blink-caret {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.caret::after {
+  content: "▍";
+  margin-left: 2px;
+  color: #FF4D5E;
+  animation: blink-caret 1s steps(2) infinite;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(215, 38, 61, 0.6); }
+  100% { box-shadow: 0 0 0 12px rgba(215, 38, 61, 0); }
+}
+.pulse-urgent { animation: pulse-ring 1.6s ease-out infinite; }
+
+/* Top emergency stripe used across headers */
+.emergency-stripe {
+  background: linear-gradient(90deg, #D7263D 0%, #D7263D 30%, transparent 100%);
+  height: 2px;
+  width: 100%;
+}

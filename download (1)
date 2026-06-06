@@ -1,0 +1,259 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Type, Brain, BarChart3, GitFork, Check, X, PhoneCall } from "lucide-react";
+
+export const Route = createFileRoute("/agente")({
+  head: () => ({ meta: [{ title: "Agente 911 · MexNLP-911" }] }),
+  component: AgentePage,
+});
+
+type Call = {
+  id: string;
+  caller: string;
+  time: string;
+  level: 0 | 1 | 2 | 3 | 4;
+  status: "procesando" | "clasificada" | "atendida";
+  transcript: string;
+  expressions: string[];
+  message: string;
+  institution: "Salud" | "Seguridad" | "Bomberos";
+  vulnerable?: boolean;
+};
+
+const TRIAGE = {
+  4: { label: "INMEDIATO", color: "#D7263D" },
+  3: { label: "MUY URGENTE", color: "#E07800" },
+  2: { label: "URGENTE", color: "#E0C800" },
+  1: { label: "MENOS URGENTE", color: "#1AAA55" },
+  0: { label: "NO URGENTE", color: "#6B7079" },
+} as const;
+
+const CALLS: Call[] = [
+  {
+    id: "C-1042", caller: "Reporte anónimo · Iztapalapa", time: "14:02",
+    level: 4, status: "clasificada",
+    transcript: "Señor por favor ayúdeme mi esposo ya se petatió está bien tieso no respira ya se me fue",
+    expressions: ["se petatió", "está bien tieso", "no respira", "ya se me fue"],
+    message: "⚠ CANALIZAR A EMERGENCIAS AHORA. Detectado: ya se murió, no respira, está bien tieso. POBLACIÓN VULNERABLE IDENTIFICADA",
+    institution: "Salud", vulnerable: true,
+  },
+  {
+    id: "C-1043", caller: "Familiar · GAM", time: "14:05",
+    level: 3, status: "procesando",
+    transcript: "Mi mamá trae la boca chueca y ya no habla bien se le fue la onda",
+    expressions: ["boca chueca", "no habla bien", "se le fue la onda"],
+    message: "⚠ PROTOCOLO ICTUS. Síntomas neurológicos focales detectados. Despachar ambulancia avanzada.",
+    institution: "Salud", vulnerable: true,
+  },
+  {
+    id: "C-1044", caller: "Vecino · Álvaro Obregón", time: "14:07",
+    level: 3, status: "clasificada",
+    transcript: "Mi papá tronó el pecho dice que le duele horrible no puede respirar",
+    expressions: ["tronó el pecho", "duele horrible", "no puede respirar"],
+    message: "⚠ POSIBLE SCA / IAM. Dolor torácico con disnea. Despachar ambulancia con cardiocompresor.",
+    institution: "Salud",
+  },
+  {
+    id: "C-1045", caller: "Madre · Tlalpan", time: "14:10",
+    level: 2, status: "clasificada",
+    transcript: "Mi bebé anda muy seco no para de vomitar tiene mucha fiebre",
+    expressions: ["muy seco", "no para de vomitar", "mucha fiebre"],
+    message: "URGENTE pediátrico: deshidratación + fiebre. Despachar paramédicos.",
+    institution: "Salud", vulnerable: true,
+  },
+  {
+    id: "C-1046", caller: "Ciudadano · Cuauhtémoc", time: "14:12",
+    level: 0, status: "atendida",
+    transcript: "Buenas tardes quería preguntar dónde saco una cita nomás por precaución",
+    expressions: ["por precaución"],
+    message: "NO URGENTE. Canalizar a Locatel / cita en clínica. No despachar unidad.",
+    institution: "Salud",
+  },
+];
+
+const STEPS = [
+  { label: "Normalización coloquial", icon: Type },
+  { label: "Detección NLP MexSalud-911", icon: Brain },
+  { label: "Clasificación XGBoost", icon: BarChart3 },
+  { label: "Generación de reporte bilateral", icon: GitFork },
+];
+
+function useTypewriter(text: string, speed = 30) {
+  const [out, setOut] = useState("");
+  useEffect(() => {
+    setOut("");
+    let i = 0;
+    const id = window.setInterval(() => {
+      i++;
+      setOut(text.slice(0, i));
+      if (i >= text.length) window.clearInterval(id);
+    }, speed);
+    return () => window.clearInterval(id);
+  }, [text, speed]);
+  return out;
+}
+
+function AgentePage() {
+  const [selectedId, setSelectedId] = useState(CALLS[0].id);
+  const call = useMemo(() => CALLS.find((c) => c.id === selectedId)!, [selectedId]);
+  const transcript = useTypewriter(call.transcript, 30);
+
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    setStep(0);
+    const ids = STEPS.map((_, i) =>
+      window.setTimeout(() => setStep(i + 1), 800 * (i + 1)),
+    );
+    return () => ids.forEach((id) => window.clearTimeout(id));
+  }, [selectedId]);
+
+  const triage = TRIAGE[call.level];
+
+  return (
+    <div className="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-[40%_60%] gap-6 min-h-screen">
+      {/* Left: call list */}
+      <section className="card-surface p-4 flex flex-col">
+        <header className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <PhoneCall className="text-[#D7263D]" size={20} />
+            <h2 className="font-display text-lg font-semibold">Llamadas entrantes</h2>
+          </div>
+          <span className="text-xs text-[#A0A4AB]">{CALLS.length} en cola</span>
+        </header>
+        <ul className="space-y-2 overflow-y-auto">
+          {CALLS.map((c) => {
+            const t = TRIAGE[c.level];
+            const active = c.id === selectedId;
+            return (
+              <li key={c.id}>
+                <button
+                  onClick={() => setSelectedId(c.id)}
+                  className="w-full text-left p-3 rounded-md border transition-all"
+                  style={{
+                    background: active ? "rgba(215,38,61,0.10)" : "rgba(255,255,255,0.02)",
+                    borderColor: active ? "#D7263D" : "#2A2D33",
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-mono text-[#A0A4AB]">{c.id} · {c.time}</span>
+                    <span
+                      className="text-[10px] uppercase font-bold px-2 py-0.5 rounded"
+                      style={{ background: t.color, color: "#0B0B0D" }}
+                    >
+                      N{c.level}
+                    </span>
+                  </div>
+                  <div className="text-sm text-[#F5F5F7] truncate">{c.caller}</div>
+                  <div className="text-xs text-[#A0A4AB] italic truncate">"{c.transcript.slice(0, 60)}..."</div>
+                  <div
+                    className="mt-1 text-[10px] uppercase tracking-wider"
+                    style={{ color: c.status === "atendida" ? "#1AAA55" : c.status === "procesando" ? "#E0C800" : "#FF4D5E" }}
+                  >
+                    ● {c.status}
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      {/* Right: detail */}
+      <section className="space-y-4">
+        {/* Transcript */}
+        <div className="card-surface p-4">
+          <div className="text-xs uppercase tracking-widest text-[#A0A4AB] mb-2">
+            Transcripción (Whisper · streaming)
+          </div>
+          <div
+            className="rounded-md p-4 font-mono text-sm leading-relaxed min-h-[90px]"
+            style={{ background: "#08090B", color: "#F5F5F7", border: "1px solid #2A2D33" }}
+          >
+            <span className="caret">{transcript}</span>
+          </div>
+        </div>
+
+        {/* Pipeline */}
+        <div className="card-surface p-4">
+          <div className="text-xs uppercase tracking-widest text-[#A0A4AB] mb-3">
+            Análisis del algoritmo
+          </div>
+          <ol className="space-y-2">
+            {STEPS.map(({ label, icon: Icon }, i) => {
+              const active = step === i;
+              const done = step > i;
+              return (
+                <li
+                  key={label}
+                  className="flex items-center gap-3 p-3 rounded-md transition-all"
+                  style={{
+                    borderLeft: active ? "3px solid #D7263D" : "3px solid transparent",
+                    background: active ? "rgba(215,38,61,0.10)" : done ? "rgba(26,170,85,0.06)" : "transparent",
+                    opacity: done || active ? 1 : 0.45,
+                  }}
+                >
+                  <Icon size={18} style={{ color: done ? "#1AAA55" : "#FF4D5E" }} />
+                  <span className="text-sm flex-1">{label}</span>
+                  <span className="text-xs" style={{ color: done ? "#1AAA55" : active ? "#FF4D5E" : "#A0A4AB" }}>
+                    {done ? "✓ completo" : active ? "procesando..." : "en espera"}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+
+        {/* Triage semáforo */}
+        <div className="card-surface p-6 text-center" style={{ borderColor: triage.color }}>
+          <div className="text-xs uppercase tracking-widest text-[#A0A4AB] mb-3">
+            Semáforo de triage
+          </div>
+          <div
+            className={`inline-block px-8 py-4 rounded-lg font-display text-3xl font-bold ${call.level >= 3 ? "pulse-urgent" : ""}`}
+            style={{ background: triage.color, color: call.level === 2 ? "#0B0B0D" : "#0B0B0D" }}
+          >
+            NIVEL {call.level} · {triage.label}
+          </div>
+          <div className="mt-4 text-xs uppercase tracking-wider text-[#A0A4AB] mb-2">
+            Expresiones coloquiales detectadas
+          </div>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {call.expressions.map((e) => (
+              <span
+                key={e}
+                className="px-3 py-1 rounded-full text-xs"
+                style={{ background: "rgba(215,38,61,0.18)", color: "#fff", border: "1px solid #D7263D" }}
+              >
+                "{e}"
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Message */}
+        <div className="card-surface p-5" style={{ borderLeft: "4px solid #D7263D" }}>
+          <div className="text-xs uppercase tracking-widest text-[#A0A4AB] mb-2">
+            Mensaje al agente · Institución activada: {call.institution}
+          </div>
+          <p className="text-base text-[#F5F5F7] leading-relaxed mb-4">
+            {call.message}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              className="flex items-center gap-2 px-5 py-2.5 rounded-md font-semibold text-white"
+              style={{ background: "#1AAA55" }}
+            >
+              <Check size={16} /> Confirmar y despachar
+            </button>
+            <button
+              className="flex items-center gap-2 px-5 py-2.5 rounded-md font-semibold text-white"
+              style={{ background: "#D7263D" }}
+            >
+              <X size={16} /> Rechazar clasificación
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

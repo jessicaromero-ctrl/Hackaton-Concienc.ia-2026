@@ -1,0 +1,326 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { HeartPulse, Shield, Flame, Play, FileText } from "lucide-react";
+
+export const Route = createFileRoute("/coordinacion")({
+  head: () => ({ meta: [{ title: "Coordinación Multi-Agente · MexNLP-911" }] }),
+  component: CoordinacionPage,
+});
+
+type Scenario = {
+  id: "medica" | "asalto" | "incendio";
+  label: string;
+  text: string;
+  activated: { salud: boolean; seguridad: boolean; bomberos: boolean };
+  salud: { triage: number; level: string; clinical: string[]; protocol: string; resource: string };
+  seguridad: { crime: string; risk: string; zone: string; unit: string };
+  bomberos: { type: string; resources: string; evac: string; unit: string };
+  report: string;
+};
+
+const SCENARIOS: Scenario[] = [
+  {
+    id: "medica",
+    label: "Emergencia médica",
+    text: "Mi esposo ya se petatió no respira está azul",
+    activated: { salud: true, seguridad: false, bomberos: false },
+    salud: {
+      triage: 4, level: "INMEDIATO",
+      clinical: ["se petatió", "no respira", "está azul (cianosis)"],
+      protocol: "RCP avanzado · vía aérea · desfibrilación temprana",
+      resource: "Ambulancia ERUM A-117 · 1.8 km · ETA 3:20",
+    },
+    seguridad: { crime: "—", risk: "Sin riesgo asociado", zone: "—", unit: "No requerido" },
+    bomberos: { type: "—", resources: "No requerido", evac: "—", unit: "En espera" },
+    report:
+      "Incidente C-1042 clasificado como paro cardiorrespiratorio (Triage Nivel 4) en domicilio particular. " +
+      "El agente Salud activó protocolo de RCP avanzado y despachó ambulancia ERUM A-117 con ETA 3 min 20 seg. " +
+      "Los agentes Seguridad y Bomberos quedaron en espera al no detectarse co-incidente. " +
+      "Tiempo total de procesamiento del sistema: 2.8 segundos desde la llamada hasta el despacho confirmado.",
+  },
+  {
+    id: "asalto",
+    label: "Asalto en curso",
+    text: "Me están asaltando ahorita en el metro Taxqueña me tienen encañonado",
+    activated: { salud: false, seguridad: true, bomberos: false },
+    salud: { triage: 1, level: "STANDBY", clinical: ["sin lesiones reportadas"], protocol: "Stand-by para atención post-incidente", resource: "Ambulancia en espera" },
+    seguridad: {
+      crime: "Robo con violencia (arma de fuego)",
+      risk: "ALTO · víctima encañonada · en curso",
+      zone: "Metro Taxqueña · Coyoacán",
+      unit: "Patrulla C-842 a 2.3 km · ETA 4:10",
+    },
+    bomberos: { type: "—", resources: "No requerido", evac: "—", unit: "En espera" },
+    report:
+      "Incidente C-1051 clasificado como robo con violencia armada en curso, Metro Taxqueña (Coyoacán). " +
+      "El agente Seguridad despachó Patrulla C-842 con ETA 4 min 10 seg y notificó a unidades de respaldo. " +
+      "El agente Salud queda en stand-by para atención de víctima post-incidente. " +
+      "Tiempo total de procesamiento del sistema: 2.6 segundos.",
+  },
+  {
+    id: "incendio",
+    label: "Incendio con víctimas",
+    text: "Se está quemando el edificio hay gente adentro hay una fuga de gas",
+    activated: { salud: true, seguridad: false, bomberos: true },
+    salud: {
+      triage: 3, level: "MUY URGENTE",
+      clinical: ["posibles quemados", "intoxicación por humo", "víctimas atrapadas"],
+      protocol: "Triage masivo MCI · oxígeno alto flujo · derivación a centros de quemados",
+      resource: "2x Ambulancias ERUM + UMI · ETA 5:40",
+    },
+    seguridad: { crime: "—", risk: "Acordonamiento perimetral requerido", zone: "Zona de incendio", unit: "Patrullas C-203, C-411 para perímetro" },
+    bomberos: {
+      type: "Incendio estructural + fuga de gas",
+      resources: "2x Pipas · 1x Escalera · HazMat",
+      evac: "EVACUACIÓN PRIORITARIA · radio 100m por riesgo de explosión",
+      unit: "Estación H. Bombero 7 · ETA 4:50",
+    },
+    report:
+      "Incidente C-1067 clasificado como incendio estructural con fuga de gas y víctimas atrapadas (multi-agencia). " +
+      "Coordinación simultánea: Bomberos despacharon 2 pipas, escalera y unidad HazMat (ETA 4:50). " +
+      "Salud preparó 2 ambulancias ERUM + UMI para triage masivo MCI (ETA 5:40). " +
+      "Seguridad acordonó perímetro de 100 m por riesgo de explosión. " +
+      "Tiempo total de procesamiento y coordinación: 2.9 segundos. Demostración exitosa de arquitectura multi-agente.",
+  },
+];
+
+const PIPELINE = ["NLP", "Clasificador", "Router", "Agentes"];
+
+function CoordinacionPage() {
+  const [scenarioId, setScenarioId] = useState<Scenario["id"]>("medica");
+  const scenario = SCENARIOS.find((s) => s.id === scenarioId)!;
+  const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [activated, setActivated] = useState(false);
+
+  const activate = () => {
+    setActivated(false);
+    setRunning(true);
+    setProgress(0);
+    const start = Date.now();
+    const id = window.setInterval(() => {
+      const p = Math.min(1, (Date.now() - start) / 3000);
+      setProgress(p);
+      if (p >= 1) {
+        window.clearInterval(id);
+        setRunning(false);
+        setActivated(true);
+      }
+    }, 50);
+  };
+
+  useEffect(() => { setActivated(false); setProgress(0); }, [scenarioId]);
+
+  const step = Math.min(PIPELINE.length - 1, Math.floor(progress * PIPELINE.length));
+
+  return (
+    <div className="p-4 md:p-6 space-y-6">
+      <header>
+        <h1 className="font-display text-2xl font-bold text-[#F5F5F7]">Centro de Coordinación Multi-Agente</h1>
+        <p className="text-sm text-[#A0A4AB]">Arquitectura de 3 agentes especializados procesando en paralelo</p>
+      </header>
+
+      {/* Simulator */}
+      <div className="card-surface p-5">
+        <div className="flex flex-wrap gap-2 mb-4">
+          {SCENARIOS.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setScenarioId(s.id)}
+              className="px-4 py-2 rounded-md text-sm font-medium transition-all"
+              style={{
+                background: scenarioId === s.id ? "rgba(215,38,61,0.15)" : "rgba(255,255,255,0.03)",
+                border: `1px solid ${scenarioId === s.id ? "#D7263D" : "#2A2D33"}`,
+                color: "#F5F5F7",
+              }}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col md:flex-row gap-3">
+          <input
+            readOnly
+            value={scenario.text}
+            placeholder="Describe el incidente reportado al 911..."
+            className="flex-1 px-4 py-3 rounded-md text-sm font-mono"
+            style={{ background: "#08090B", border: "1px solid #2A2D33", color: "#F5F5F7" }}
+          />
+          <button
+            onClick={activate}
+            disabled={running}
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-md font-semibold text-white disabled:opacity-50"
+            style={{ background: "#D7263D" }}
+          >
+            <Play size={16} /> {running ? "Procesando..." : "Activar sistema multi-agente"}
+          </button>
+        </div>
+
+        {(running || activated) && (
+          <div className="mt-5">
+            <div className="flex justify-between text-xs text-[#A0A4AB] mb-2">
+              {PIPELINE.map((p, i) => (
+                <span
+                  key={p}
+                  style={{
+                    color: i <= step || activated ? "#FF4D5E" : "#A0A4AB",
+                    fontWeight: i === step && running ? 700 : 400,
+                  }}
+                >
+                  {i + 1}. {p}
+                </span>
+              ))}
+            </div>
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: "#08090B", border: "1px solid #2A2D33" }}>
+              <div
+                className="h-full transition-all duration-100"
+                style={{
+                  width: `${(activated ? 1 : progress) * 100}%`,
+                  background: "linear-gradient(90deg, #D7263D, #FF4D5E, #ffffff)",
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Three agent panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <AgentPanel
+          color="#1AAA55"
+          icon={<HeartPulse size={22} />}
+          name="Agente Salud"
+          glow="glow-health"
+          activated={activated && scenario.activated.salud}
+          body={
+            <>
+              <Row label="Triage" value={`Nivel ${scenario.salud.triage} · ${scenario.salud.level}`} />
+              <ChipList label="Expresiones clínicas" items={scenario.salud.clinical} />
+              <Row label="Protocolo" value={scenario.salud.protocol} />
+              <Row label="Recurso a despachar" value={scenario.salud.resource} />
+            </>
+          }
+          cta="Confirmar despacho médico"
+        />
+        <AgentPanel
+          color="#3B82B5"
+          icon={<Shield size={22} />}
+          name="Agente Seguridad"
+          glow="glow-security"
+          activated={activated && scenario.activated.seguridad}
+          body={
+            <>
+              <Row label="Tipo de delito" value={scenario.seguridad.crime} />
+              <Row label="Nivel de riesgo" value={scenario.seguridad.risk} />
+              <Row label="Zona del incidente" value={scenario.seguridad.zone} />
+              <Row label="Unidad asignada" value={scenario.seguridad.unit} />
+            </>
+          }
+          cta="Confirmar despacho policial"
+        />
+        <AgentPanel
+          color="#E07800"
+          icon={<Flame size={22} />}
+          name="Agente Bomberos"
+          glow="glow-fire"
+          activated={activated && scenario.activated.bomberos}
+          body={
+            <>
+              <Row label="Tipo de incidente" value={scenario.bomberos.type} />
+              <Row label="Recursos" value={scenario.bomberos.resources} />
+              <Row label="Protocolo evacuación" value={scenario.bomberos.evac} />
+              <Row label="Unidad más cercana" value={scenario.bomberos.unit} />
+            </>
+          }
+          cta="Confirmar despacho bomberos"
+        />
+      </div>
+
+      {/* Authority report */}
+      {activated && (
+        <div className="rounded-lg p-6 border" style={{ background: "#08090B", borderColor: "#2A2D33" }}>
+          <div className="flex items-center gap-2 mb-3">
+            <FileText size={18} className="text-[#D7263D]" />
+            <h2 className="font-display text-lg font-semibold text-[#F5F5F7]">Informe para autoridad</h2>
+            <span className="text-[10px] uppercase tracking-widest text-[#A0A4AB] ml-auto">
+              Generado automáticamente
+            </span>
+          </div>
+          <p className="text-sm text-[#F5F5F7] leading-relaxed whitespace-pre-line">
+            {scenario.report}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AgentPanel({
+  color, icon, name, body, cta, activated, glow,
+}: {
+  color: string; icon: React.ReactNode; name: string; body: React.ReactNode; cta: string; activated: boolean; glow: string;
+}) {
+  return (
+    <div
+      className={`rounded-lg p-5 transition-all ${activated ? glow : ""}`}
+      style={{
+        background: "#15171A",
+        border: `1px solid ${activated ? color : "#2A2D33"}`,
+        opacity: activated ? 1 : 0.7,
+      }}
+    >
+      <header className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2" style={{ color }}>
+          {icon}
+          <span className="font-display font-bold text-[#F5F5F7]">{name}</span>
+        </div>
+        <span
+          className="text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded"
+          style={{
+            background: activated ? color : "transparent",
+            color: activated ? "#0B0B0D" : "#A0A4AB",
+            border: activated ? "none" : "1px solid #2A2D33",
+          }}
+        >
+          {activated ? "● Activado" : "○ En espera"}
+        </span>
+      </header>
+      <div className="space-y-3 mb-5 min-h-[200px]">{body}</div>
+      <button
+        disabled={!activated}
+        className="w-full py-2.5 rounded-md font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        style={{ background: color }}
+      >
+        {cta}
+      </button>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-[#A0A4AB] mb-0.5">{label}</div>
+      <div className="text-sm text-[#F5F5F7]">{value}</div>
+    </div>
+  );
+}
+
+function ChipList({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-[#A0A4AB] mb-1">{label}</div>
+      <div className="flex flex-wrap gap-1.5">
+        {items.map((it) => (
+          <span
+            key={it}
+            className="px-2 py-0.5 rounded-full text-xs"
+            style={{ background: "rgba(215,38,61,0.18)", color: "#fff", border: "1px solid #D7263D" }}
+          >
+            {it}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,86 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Radio, LayoutDashboard, Network, ShieldAlert } from "lucide-react";
+
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "MexNLP-911 Command Center" },
+      { name: "description", content: "Plataforma ejecutiva de coordinación de emergencias 911 con IA y NLP en español mexicano." },
+    ],
+  }),
+  component: Home,
+});
+
+const roles = [
+  {
+    to: "/agente",
+    title: "Agente 911",
+    desc: "Recibe llamadas en tiempo real y confirma despachos clasificados por IA.",
+    icon: Radio,
+  },
+  {
+    to: "/dashboard",
+    title: "Autoridad Municipal",
+    desc: "KPIs operativos, mapa de calor por alcaldía e incidentes recientes.",
+    icon: LayoutDashboard,
+  },
+  {
+    to: "/coordinacion",
+    title: "Centro de Coordinación",
+    desc: "Simulador multi-agente: Salud, Seguridad y Bomberos en paralelo.",
+    icon: Network,
+  },
+] as const;
+
+function Home() {
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative"
+      style={{
+        background:
+          "radial-gradient(circle at 15% 10%, rgba(215,38,61,0.18), transparent 55%), radial-gradient(circle at 85% 85%, rgba(215,38,61,0.10), transparent 55%), #0B0B0D",
+      }}
+    >
+      <div className="absolute top-0 inset-x-0 emergency-stripe" />
+
+      <div className="flex items-center gap-3 mb-6">
+        <ShieldAlert size={42} className="text-[#D7263D]" />
+        <div>
+          <h1 className="font-display text-4xl md:text-5xl font-bold text-[#F5F5F7]">
+            MexNLP-911
+          </h1>
+          <p className="text-[#A0A4AB] text-sm tracking-[0.3em] uppercase">
+            Command Center · CDMX
+          </p>
+        </div>
+      </div>
+      <p className="max-w-2xl text-center text-[#A0A4AB] mb-12">
+        Coordinación ejecutiva de emergencias asistida por IA. Procesamiento NLP
+        de español coloquial mexicano para triage automático y despacho institucional.
+      </p>
+
+      <div className="grid md:grid-cols-3 gap-6 w-full max-w-5xl">
+        {roles.map(({ to, title, desc, icon: Icon }) => (
+          <Link
+            key={to}
+            to={to}
+            className="group card-surface p-6 transition-all hover:-translate-y-1 hover:glow-emergency"
+          >
+            <Icon size={32} className="text-[#D7263D] mb-4" />
+            <h2 className="font-display text-xl font-semibold text-[#F5F5F7] mb-2">
+              {title}
+            </h2>
+            <p className="text-sm text-[#A0A4AB] leading-relaxed">{desc}</p>
+            <div className="mt-5 text-xs uppercase tracking-widest text-[#D7263D] group-hover:text-[#FF4D5E]">
+              Entrar →
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-16 text-[10px] text-[#6B7079] tracking-widest uppercase">
+        Demo Hackathon · Datos simulados
+      </div>
+    </div>
+  );
+}
