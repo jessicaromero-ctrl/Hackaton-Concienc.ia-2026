@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MexNLP-911 · Concienc.ia Hackathon 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #D10000;
+    --red-dark: #8B0000;
+    --red-glow: rgba(209,0,0,0.15);
+    --black: #0A0A0A;
+    --gray-dark: #1C1C1C;
+    --gray-mid: #3A3A3A;
+    --gray-light: #9A9A9A;
+    --gray-pale: #E8E8E8;
+    --white: #F5F5F5;
+    --white-pure: #FFFFFF;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Libre Baskerville', Georgia, serif;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ── NOISE OVERLAY ─────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* ── TYPOGRAPHY ─────────────────────── */
+  .display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; line-height: 0.92; }
+  .serif-italic { font-family: 'DM Serif Display', serif; font-style: italic; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ── SCROLLING TICKER ───────────────── */
+  .ticker-wrap {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 900;
+    background: var(--red);
+    overflow: hidden;
+    height: 28px;
+    display: flex;
+    align-items: center;
+  }
+  .ticker-inner {
+    display: flex;
+    animation: ticker 22s linear infinite;
+    white-space: nowrap;
+  }
+  .ticker-inner span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--white-pure);
+    padding: 0 40px;
+    text-transform: uppercase;
+  }
+  @keyframes ticker {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ── NAV DOTS ───────────────────────── */
+  .nav-dots {
+    position: fixed;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 800;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .nav-dot {
+    width: 6px; height: 6px;
+    border: 1px solid var(--gray-light);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: transparent;
+  }
+  .nav-dot.active, .nav-dot:hover {
+    background: var(--red);
+    border-color: var(--red);
+    transform: scale(1.6);
+  }
+
+  /* ── SECTIONS ───────────────────────── */
+  section {
+    min-height: 100vh;
+    padding: 80px 0 60px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 48px;
+    width: 100%;
+  }
+
+  /* ── SECTION LABELS ─────────────────── */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: var(--red);
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 1 — COVER
+  ═══════════════════════════════════════ */
+  #cover {
+    background: var(--black);
+    overflow: hidden;
+    padding-top: 28px;
+  }
+
+  .cover-bg-number {
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(200px, 28vw, 420px);
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(209,0,0,0.12);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .cover-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--gray-light);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .cover-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 11vw, 160px);
+    line-height: 0.88;
+    color: var(--white-pure);
+    letter-spacing: 0.02em;
+  }
+
+  .cover-title .red { color: var(--red); }
+
+  .cover-sub {
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: clamp(16px, 2.2vw, 24px);
+    color: var(--gray-light);
+    margin-top: 24px;
+    max-width: 540px;
+    line-height: 1.5;
+  }
+
+  .cover-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 36px;
+  }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 1px solid var(--gray-mid);
+    color: var(--gray-light);
+    padding: 6px 14px;
+    transition: all 0.3s;
+  }
+  .tag:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .tag.highlight {
+    border-color: var(--red);
+    color: var(--white-pure);
+    background: var(--red);
+  }
+
+  .cover-institutions {
+    margin-top: 52px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .inst-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--gray-light);
+    text-transform: uppercase;
+  }
+
+  .inst-pill .dot {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+  }
+  .dot-red { background: var(--red); color: white; }
+  .dot-gray { background: var(--gray-mid); color: var(--white); }
+
+  .cover-date {
+    position: absolute;
+    bottom: 40px;
+    right: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--gray-mid);
+    text-transform: uppercase;
+    text-align: right;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 2 — EL PROBLEMA
+  ═══════════════════════════════════════ */
+  #problema {
+    background: var(--white-pure);
+    color: var(--black);
+  }
+
+  #problema .section-label { color: var(--red); }
+  #problema .section-label::after { background: var(--red); }
+
+  .problema-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-top: 8px;
+  }
+
+  .stats-panel {
+    padding-right: 60px;
+    border-right: 1px solid var(--gray-pale);
+  }
+
+  .stat-block {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--gray-pale);
+  }
+  .stat-block:last-child { border-bottom: none; }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(56px, 7vw, 96px);
+    line-height: 0.9;
+    color: var(--black);
+    letter-spacing: 0.02em;
+  }
+  .stat-num .red { color: var(--red); }
+
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--gray-light);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .gaps-panel {
+    padding-left: 60px;
+  }
+
+  .section-h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 4vw, 52px);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--black);
+    margin-bottom: 32px;
+  }
+
+  .gap-item {
+    margin-bottom: 28px;
+    padding-left: 20px;
+    border-left: 2px solid var(--red);
+  }
+
+  .gap-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--black);
+    margin-bottom: 6px;
+  }
+
+  .gap-desc {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--gray-mid);
+  }
+
+  .coloquial-callout {
+    background: var(--black);
+    padding: 20px 24px;
+    margin-top: 28px;
+  }
+
+  .coloquial-callout .mono {
+    font-size: 12px;
+    color: var(--red);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .coloquial-callout p {
+    font-size: 12px;
+    color: var(--gray-pale);
+    line-height: 1.6;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 3 — LA SOLUCIÓN
+  ═══════════════════════════════════════ */
+  #solucion {
+    background: var(--gray-dark);
+  }
+
+  .solucion-headline {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 6vw, 80px);
+    line-height: 0.95;
+    letter-spacing: 0.03em;
+    color: var(--white-pure);
+    max-width: 700px;
+    margin-bottom: 16px;
+  }
+
+  .solucion-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--gray-light);
+    max-width: 600px;
+    margin-bottom: 48px;
+  }
+
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--gray-mid);
+    border: 1px solid var(--gray-mid);
+  }
+
+  .pillar {
+    background: var(--gray-dark);
+    padding: 28px 24px;
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .pillar:hover {
+    background: #222;
+  }
+
+  .pillar-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    line-height: 1;
+    color: rgba(209,0,0,0.15);
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+
+  .pillar-icon {
+    width: 36px; height: 36px;
+    border: 1px solid var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 16px;
+  }
+
+  .pillar-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.05em;
+    color: var(--white-pure);
+    margin-bottom: 10px;
+  }
+
+  .pillar-detail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-light);
+    line-height: 1.7;
+    letter-spacing: 0.05em;
+  }
+
+  .pillar-tag {
+    display: inline-block;
+    margin-top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--red);
+    text-transform: uppercase;
+    border-top: 1px solid rgba(209,0,0,0.3);
+    padding-top: 10px;
+    width: 100%;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 4 — ARQUITECTURA
+  ═══════════════════════════════════════ */
+  #arquitectura {
+    background: var(--black);
+  }
+
+  .arch-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 48px;
+    align-items: start;
+    margin-top: 16px;
+  }
+
+  .arch-sidebar h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    line-height: 0.9;
+    color: var(--white-pure);
+    margin-bottom: 20px;
+  }
+
+  .arch-sidebar p {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--gray-light);
+  }
+
+  .arch-diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .arch-row {
+    display: grid;
+    gap: 1px;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .arch-row.row-1 { grid-template-columns: 1fr; }
+  .arch-row.row-2 { grid-template-columns: 1fr 1fr; }
+  .arch-row.row-3 { grid-template-columns: repeat(3, 1fr); }
+  .arch-row.row-4 { grid-template-columns: 1fr; }
+
+  .arch-cell {
+    background: var(--black);
+    padding: 18px 20px;
+    position: relative;
+  }
+
+  .arch-cell-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.25em;
+    color: var(--gray-mid);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .arch-cell-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.05em;
+    color: var(--white-pure);
+    margin-bottom: 4px;
+  }
+
+  .arch-cell.highlight-red {
+    border-left: 3px solid var(--red);
+  }
+
+  .arch-cell.highlight-mid {
+    border-left: 3px solid var(--gray-mid);
+  }
+
+  .arch-cell .arch-bullets {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--gray-light);
+    line-height: 1.9;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+
+  .arch-arrow {
+    text-align: center;
+    padding: 6px 0;
+    font-size: 11px;
+    color: var(--red);
+    background: var(--black);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+  }
+
+  .arch-cell.dashboard {
+    background: rgba(209,0,0,0.05);
+    border-top: 1px solid rgba(209,0,0,0.25);
+  }
+
+  .arch-cell.dashboard .arch-cell-title {
+    color: var(--red);
+  }
+
+  .arch-cell.dashboard .arch-bullets {
+    color: rgba(209,0,0,0.7);
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 5 — IMPACTO
+  ═══════════════════════════════════════ */
+  #impacto {
+    background: var(--white-pure);
+    color: var(--black);
+  }
+
+  #impacto .section-label { color: var(--red); }
+  #impacto .section-label::after { background: var(--red); }
+
+  .impacto-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    margin-top: 8px;
+  }
+
+  .metrics-col .section-h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(32px, 3.5vw, 44px);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--black);
+    margin-bottom: 28px;
+  }
+
+  .metric-strip {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--gray-pale);
+  }
+
+  .metric-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    line-height: 0.9;
+    color: var(--red);
+  }
+
+  .metric-desc {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--gray-mid);
+    max-width: 200px;
+  }
+
+  .uniq-col .section-h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(32px, 3.5vw, 44px);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--black);
+    margin-bottom: 28px;
+  }
+
+  .uniq-item {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--gray-pale);
+    align-items: start;
+  }
+
+  .uniq-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--red);
+    line-height: 1;
+  }
+
+  .uniq-text {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--gray-mid);
+  }
+
+  .corpus-callout {
+    background: var(--black);
+    padding: 20px 24px;
+    margin-top: 20px;
+  }
+
+  .corpus-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .corpus-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--red);
+    border: 1px solid rgba(209,0,0,0.3);
+    padding: 4px 10px;
+  }
+
+  /* ══════════════════════════════════════
+     SLIDE 6 — CIERRE
+  ═══════════════════════════════════════ */
+  #cierre {
+    background: var(--black);
+    overflow: hidden;
+    min-height: 100vh;
+  }
+
+  .cierre-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 70% 50%, rgba(139,0,0,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cierre-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .cierre-headline {
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: clamp(36px, 5.5vw, 72px);
+    line-height: 1.1;
+    color: var(--white-pure);
+    max-width: 640px;
+    margin-bottom: 20px;
+  }
+
+  .cierre-headline .red { color: var(--red); }
+
+  .cierre-sub {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--gray-light);
+    max-width: 520px;
+    margin-bottom: 48px;
+  }
+
+  .cierre-pillars {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 480px;
+    margin-bottom: 52px;
+  }
+
+  .cierre-pill {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .cierre-pill .ci {
+    width: 28px; height: 28px;
+    border: 1px solid var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .cierre-pill span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--gray-light);
+    text-transform: uppercase;
+  }
+
+  .cierre-question {
+    border-left: 3px solid var(--red);
+    padding: 16px 24px;
+    max-width: 600px;
+    background: rgba(209,0,0,0.04);
+  }
+
+  .cierre-question p {
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--gray-pale);
+  }
+
+  .cierre-footer {
+    position: absolute;
+    bottom: 36px;
+    left: 48px;
+    right: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .cierre-footer-left {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--gray-mid);
+    text-transform: uppercase;
+    line-height: 1.8;
+  }
+
+  .cierre-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 0.1em;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--gray-mid);
+  }
+
+  /* ── REVEAL ANIMATIONS ─────────────── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.45s; }
+
+  /* ── SCROLLBAR ──────────────────────── */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-inner">
+    <span>MexNLP-911 · Concienc.ia Hackathon 2026 · Clasificación de emergencias · NLP Coloquial Mexicano · CDMX · Multi-Agente · Triage Inteligente · Privacy by Design · LGPDPSO · < 45s respuesta · 92%+ precisión ·&nbsp;</span>
+    <span>MexNLP-911 · Concienc.ia Hackathon 2026 · Clasificación de emergencias · NLP Coloquial Mexicano · CDMX · Multi-Agente · Triage Inteligente · Privacy by Design · LGPDPSO · < 45s respuesta · 92%+ precisión ·&nbsp;</span>
+  </div>
+</div>
+
+<!-- NAV DOTS -->
+<nav class="nav-dots" id="navDots">
+  <div class="nav-dot active" data-target="cover"></div>
+  <div class="nav-dot" data-target="problema"></div>
+  <div class="nav-dot" data-target="solucion"></div>
+  <div class="nav-dot" data-target="arquitectura"></div>
+  <div class="nav-dot" data-target="impacto"></div>
+  <div class="nav-dot" data-target="cierre"></div>
+</nav>
+
+<!-- ══ SLIDE 1: COVER ══════════════════ -->
+<section id="cover">
+  <div class="cover-bg-number">911</div>
+  <div class="container">
+    <p class="cover-eyebrow reveal">Concienc.ia Hackathon 2026 · Young AI Leaders · México</p>
+    <h1 class="cover-title reveal reveal-delay-1">
+      Mex<span class="red">NLP</span><br>911
+    </h1>
+    <p class="cover-sub reveal reveal-delay-2">
+      Inteligencia Artificial para emergencias en CDMX.<br>
+      Entiende el español que nadie más entiende.
+    </p>
+    <div class="cover-tags reveal reveal-delay-3">
+      <span class="tag highlight">Salud</span>
+      <span class="tag highlight">Seguridad</span>
+      <span class="tag highlight">Bomberos</span>
+      <span class="tag">NLP Coloquial</span>
+      <span class="tag">Multi-Agente</span>
+      <span class="tag">On-premise</span>
+      <span class="tag">LGPDPSO</span>
+    </div>
+    <div class="cover-institutions reveal reveal-delay-4">
+      <div class="inst-pill">
+        <div class="dot dot-red">S</div>
+        Salud
+      </div>
+      <div class="inst-pill">
+        <div class="dot dot-gray">P</div>
+        Policía
+      </div>
+      <div class="inst-pill">
+        <div class="dot dot-gray">B</div>
+        Bomberos
+      </div>
+    </div>
+  </div>
+  <div class="cover-date">hackathon.youngaileaders.info&nbsp;·&nbsp;5–6 Junio 2026</div>
+</section>
+
+<!-- ══ SLIDE 2: EL PROBLEMA ════════════ -->
+<section id="problema">
+  <div class="container">
+    <div class="section-label reveal">02 — El Problema</div>
+    <div class="problema-grid">
+      <div class="stats-panel">
+        <div class="stat-block reveal">
+          <div class="stat-num"><span class="red">M</span>+</div>
+          <div class="stat-label">llamadas 911 al año en CDMX</div>
+        </div>
+        <div class="stat-block reveal reveal-delay-1">
+          <div class="stat-num"><span class="red">0</span>%</div>
+          <div class="stat-label">sistemas que entienden coloquialismos</div>
+        </div>
+        <div class="stat-block reveal reveal-delay-2">
+          <div class="stat-num"><span class="red">3</span> min</div>
+          <div class="stat-label">promedio de clasificación manual</div>
+        </div>
+      </div>
+      <div class="gaps-panel reveal reveal-delay-1">
+        <h2 class="section-h2">¿Cuál es<br>el gap?</h2>
+        <div class="gap-item">
+          <div class="gap-title">Lenguaje coloquial no reconocido</div>
+          <div class="gap-desc">Ningún sistema NLP existente procesa expresiones como estas. El vocabulario de urgencia en México no existe en los corpora estándar.</div>
+        </div>
+        <div class="gap-item">
+          <div class="gap-title">Solo emergencias médicas atendidas</div>
+          <div class="gap-desc">Asaltos, robos y violencia ciudadana no tienen clasificación ni coordinación multi-institucional.</div>
+        </div>
+        <div class="gap-item">
+          <div class="gap-title">Sin inteligencia colectiva</div>
+          <div class="gap-desc">Cada llamada se atiende en silos. No hay análisis de patrones, zonas de riesgo ni coordinación en tiempo real.</div>
+        </div>
+        <div class="coloquial-callout reveal reveal-delay-2">
+          <span class="mono">// corpus real · MexSalud-911</span>
+          <p>"Se le fue la onda" → síncope &nbsp;·&nbsp; "Está azul" → cianosis<br>"Está tieso" → pérdida de conciencia &nbsp;·&nbsp; "Trae la boca chueca" → EVC</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 3: LA SOLUCIÓN ════════════ -->
+<section id="solucion">
+  <div class="container">
+    <div class="section-label reveal">03 — La Solución</div>
+    <h2 class="solucion-headline reveal">MexNLP-911:<br>IA que entiende<br><em style="font-family:'DM Serif Display',serif;color:var(--red)">cualquier</em> emergencia</h2>
+    <p class="solucion-desc reveal reveal-delay-1">
+      Un sistema de IA que entiende el español coloquial mexicano para clasificar salud, seguridad e incendio — y coordinar recursos institucionales en tiempo real.
+    </p>
+    <div class="pillars-grid reveal reveal-delay-2">
+      <div class="pillar">
+        <div class="pillar-num">01</div>
+        <div class="pillar-icon">🗣</div>
+        <div class="pillar-title">NLP Coloquial</div>
+        <div class="pillar-detail">
+          Corpus MexSalud-911<br>
+          150+ expresiones anotadas<br>
+          por nivel de urgencia
+        </div>
+        <div class="pillar-tag">Lenguaje real</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">02</div>
+        <div class="pillar-icon">⚡</div>
+        <div class="pillar-title">Triage Inteligente</div>
+        <div class="pillar-detail">
+          Clasificación 5 niveles<br>
+          Salud · Seguridad · Incendio<br>
+          Respuesta &lt; 45 seg
+        </div>
+        <div class="pillar-tag">Velocidad crítica</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">03</div>
+        <div class="pillar-icon">🤖</div>
+        <div class="pillar-title">Multi-Agente</div>
+        <div class="pillar-detail">
+          Agentes especializados<br>
+          por tipo de emergencia<br>
+          Informes automáticos
+        </div>
+        <div class="pillar-tag">Coordinación</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">04</div>
+        <div class="pillar-icon">📊</div>
+        <div class="pillar-title">Dashboard Autoridad</div>
+        <div class="pillar-detail">
+          Patrones y estadísticas<br>
+          Coordinación de recursos<br>
+          Toma de decisiones
+        </div>
+        <div class="pillar-tag">Visibilidad total</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 4: ARQUITECTURA ═══════════ -->
+<section id="arquitectura">
+  <div class="container">
+    <div class="section-label reveal">04 — Arquitectura</div>
+    <div class="arch-layout reveal reveal-delay-1">
+      <div class="arch-sidebar">
+        <h3>Multi-<br>Agente</h3>
+        <p>Orquestación inteligente de recursos institucionales desde una sola llamada.</p>
+      </div>
+      <div class="arch-diagram">
+        <!-- ENTRADA -->
+        <div class="arch-row row-1">
+          <div class="arch-cell highlight-red">
+            <div class="arch-cell-label">ENTRADA</div>
+            <div class="arch-cell-title">Llamada 911 · Texto / Audio</div>
+          </div>
+        </div>
+        <div class="arch-arrow">↓ ASR + Preprocesamiento</div>
+        <!-- CLASIFICACIÓN + ROUTER -->
+        <div class="arch-row row-2">
+          <div class="arch-cell highlight-red">
+            <div class="arch-cell-label">CLASIFICACIÓN</div>
+            <div class="arch-cell-title">NLP Coloquial + XGBoost</div>
+            <div class="arch-bullets">BoW / TF-IDF · Expresiones anotadas · 5 niveles de urgencia</div>
+          </div>
+          <div class="arch-cell highlight-mid">
+            <div class="arch-cell-label">ROUTER</div>
+            <div class="arch-cell-title">Orquestador</div>
+            <div class="arch-bullets">Tipo de emergencia → agente asignado · Prioridad · Tiempo</div>
+          </div>
+        </div>
+        <div class="arch-arrow">↓ Despacho automático</div>
+        <!-- AGENTES -->
+        <div class="arch-row row-3">
+          <div class="arch-cell">
+            <div class="arch-cell-label" style="color:var(--red)">Agente Salud</div>
+            <div class="arch-bullets">Triage 5 niveles<br>Alerta médico esp.<br>Protocolo clínico</div>
+          </div>
+          <div class="arch-cell">
+            <div class="arch-cell-label" style="color:var(--gray-light)">Agente Seguridad</div>
+            <div class="arch-bullets">Asalto / robo / violencia<br>Despacho policía<br>Zona de riesgo activa</div>
+          </div>
+          <div class="arch-cell">
+            <div class="arch-cell-label" style="color:var(--gray-light)">Agente Bomberos</div>
+            <div class="arch-bullets">Fuego / fuga<br>Recursos requeridos<br>Protocolo evacuación</div>
+          </div>
+        </div>
+        <div class="arch-arrow">↓ Reporte consolidado</div>
+        <!-- DASHBOARD -->
+        <div class="arch-row row-4">
+          <div class="arch-cell dashboard">
+            <div class="arch-cell-label">OUTPUT · DASHBOARD DE AUTORIDADES</div>
+            <div class="arch-cell-title">Estadísticas · Patrones · Hotspots · Coordinación en tiempo real</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 5: IMPACTO ════════════════ -->
+<section id="impacto">
+  <div class="container">
+    <div class="section-label reveal">05 — Impacto & Diferenciadores</div>
+    <div class="impacto-grid">
+      <div class="metrics-col reveal">
+        <h2 class="section-h2">Impacto<br>medible</h2>
+        <div class="metric-strip">
+          <div class="metric-value">&lt;45s</div>
+          <div class="metric-desc">de clasificación<br>vs. 3 min manual</div>
+        </div>
+        <div class="metric-strip">
+          <div class="metric-value">&gt;92%</div>
+          <div class="metric-desc">precisión en emergencias nivel 4</div>
+        </div>
+        <div class="metric-strip">
+          <div class="metric-value">3</div>
+          <div class="metric-desc">tipos de emergencia atendidos simultáneamente</div>
+        </div>
+        <div class="metric-strip">
+          <div class="metric-value">100%</div>
+          <div class="metric-desc">on-premise · sin datos a APIs externas</div>
+        </div>
+      </div>
+      <div class="uniq-col reveal reveal-delay-2">
+        <h2 class="section-h2">Lo que nos<br>hace únicos</h2>
+        <div class="uniq-item">
+          <div class="uniq-num">01</div>
+          <div class="uniq-text">Primer corpus de PLN que procesa expresiones coloquiales mexicanas de urgencia médica: <em>'está tieso'</em>, <em>'no se mueve ni tantito'</em>, <em>'trae la boca chueca'</em>.</div>
+        </div>
+        <div class="uniq-item">
+          <div class="uniq-num">02</div>
+          <div class="uniq-text">Arquitectura única: clasificación + multi-agente para salud, seguridad y bomberos en una sola plataforma integrada.</div>
+        </div>
+        <div class="uniq-item">
+          <div class="uniq-num">03</div>
+          <div class="uniq-text">Dashboard para autoridades con patrones, hotspots geoespaciales y coordinación institucional en tiempo real.</div>
+        </div>
+        <div class="uniq-item">
+          <div class="uniq-num">04</div>
+          <div class="uniq-text">Privacy by design: LGPDPSO, anonimización completa, sin PII en reposo.</div>
+        </div>
+        <div class="corpus-callout">
+          <div class="mono" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;color:var(--red);text-transform:uppercase;margin-bottom:10px;">MexSalud-911 · Corpus</div>
+          <div class="corpus-examples">
+            <span class="corpus-tag">'está azul'</span>
+            <span class="corpus-tag">'se le fue la onda'</span>
+            <span class="corpus-tag">'no respira bien'</span>
+            <span class="corpus-tag">'está tieso'</span>
+            <span class="corpus-tag">'boca chueca'</span>
+            <span class="corpus-tag">+145 más</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 6: CIERRE ════════════════ -->
+<section id="cierre">
+  <div class="cierre-bg"></div>
+  <div class="container">
+    <div class="cierre-content">
+      <div class="section-label reveal" style="color:var(--red);">06 — Cierre</div>
+      <h2 class="cierre-headline reveal reveal-delay-1">
+        Una llamada.<br>
+        <span class="red">Una vida.</span>
+      </h2>
+      <p class="cierre-sub reveal reveal-delay-2">
+        MexNLP-911 conecta la voz del ciudadano mexicano con la respuesta institucional correcta — en menos de 45 segundos.
+      </p>
+      <div class="cierre-pillars reveal reveal-delay-3">
+        <div class="cierre-pill">
+          <div class="ci">🗣</div>
+          <span>NLP Coloquial Mexicano</span>
+        </div>
+        <div class="cierre-pill">
+          <div class="ci">🤖</div>
+          <span>Arquitectura Multi-Agente</span>
+        </div>
+        <div class="cierre-pill">
+          <div class="ci">🏛</div>
+          <span>Coordinación Institucional</span>
+        </div>
+      </div>
+      <div class="cierre-question reveal reveal-delay-4">
+        <p>¿Cómo podría el ML + IA como herramientas complementarias salvar la próxima vida que llame al 911?</p>
+      </div>
+    </div>
+  </div>
+  <div class="cierre-footer">
+    <div class="cierre-footer-left">
+      Concienc.ia Hackathon México 2026<br>
+      Young AI Leaders Community<br>
+      hackathon.youngaileaders.info
+    </div>
+    <div class="cierre-logo">MexNLP-911</div>
+  </div>
+</section>
+
+<script>
+  // ── REVEAL ON SCROLL ─────────────────
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => observer.observe(el));
+
+  // ── NAV DOTS ─────────────────────────
+  const sections = document.querySelectorAll('section');
+  const dots = document.querySelectorAll('.nav-dot');
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      document.getElementById(dot.dataset.target).scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  const secObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        dots.forEach(d => d.classList.remove('active'));
+        const active = document.querySelector(`.nav-dot[data-target="${id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.4 });
+
+  sections.forEach(s => secObserver.observe(s));
+</script>
+</body>
+</html>
